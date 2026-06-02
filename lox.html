@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>РЕД ОС — Установка и настройка chrony (шпаргалки по клику)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Open Sans', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .top-banner {
+            background: linear-gradient(135deg, #1a2a3a 0%, #0f1a24 100%);
+            color: white;
+            text-align: center;
+            padding: 12px;
+            font-size: 14px;
+            border-bottom: 3px solid #cc2b24;
+        }
+
+        .top-banner a {
+            color: #ff6b64;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #cc2b24;
+        }
+
+        .logo span {
+            color: #333;
+            font-weight: 400;
+        }
+
+        .nav a {
+            color: #333;
+            text-decoration: none;
+            margin-left: 25px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav a:hover {
+            color: #cc2b24;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 30px;
+            display: flex;
+            gap: 40px;
+        }
+
+        .sidebar {
+            width: 280px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-title {
+            font-weight: 700;
+            font-size: 18px;
+            padding: 12px 0;
+            border-bottom: 2px solid #cc2b24;
+            margin-bottom: 15px;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 8px;
+        }
+
+        .sidebar-menu a {
+            color: #555;
+            text-decoration: none;
+            display: block;
+            padding: 6px 0;
+            border-left: 3px solid transparent;
+            padding-left: 12px;
+            transition: all 0.2s;
+        }
+
+        .sidebar-menu a:hover {
+            color: #cc2b24;
+            border-left-color: #cc2b24;
+            background: #f9f9f9;
+        }
+
+        .content {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            padding: 30px 35px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #222;
+            border-left: 5px solid #cc2b24;
+            padding-left: 18px;
+        }
+
+        h3 {
+            font-size: 22px;
+            margin: 30px 0 15px 0;
+            color: #cc2b24;
+        }
+
+        p {
+            margin-bottom: 16px;
+            text-align: justify;
+        }
+
+        pre {
+            background: #1e1e2f;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 10px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        ul, ol {
+            margin: 15px 0 15px 35px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        .code-block {
+            background: #f4f4f4;
+            border-left: 4px solid #cc2b24;
+            padding: 12px 18px;
+            font-family: monospace;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .note {
+            background: #eef4ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        hr {
+            margin: 30px 0;
+            border: none;
+            height: 1px;
+            background: #e0e0e0;
+        }
+
+        .footer {
+            background: #1a2a3a;
+            color: #aaa;
+            padding: 30px;
+            text-align: center;
+            font-size: 14px;
+            margin-top: 40px;
+        }
+
+        .footer a {
+            color: #cc2b24;
+            text-decoration: none;
+        }
+
+        @media (max-width: 850px) {
+            .container {
+                flex-direction: column;
+                padding: 20px;
+            }
+            .sidebar {
+                width: 100%;
+            }
+            .header {
+                flex-direction: column;
+                gap: 12px;
+            }
+            .nav a {
+                margin: 0 12px;
+            }
+        }
+
+        /* ========== СТИЛИ ДЛЯ ШПАРГАЛОК (ПО КЛИКУ) ========== */
+        .cheat-word {
+            cursor: pointer;
+            position: relative;
+            /* Внешне слово не отличается от обычного текста */
+        }
+
+        /* Всплывающая рамка */
+        .cheat-popup {
+            visibility: hidden;
+            opacity: 0;
+            position: fixed;
+            background: #1a2a3a;
+            color: white;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            max-width: 400px;
+            border-left: 3px solid #cc2b24;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: opacity 0.2s ease;
+            z-index: 10000;
+            pointer-events: auto;
+            line-height: 1.4;
+            white-space: pre-wrap;   /* перенос строк по \n */
+            font-family: monospace;
+        }
+
+        /* Показываем рамку */
+        .cheat-word.show-popup .cheat-popup {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="top-banner">
+    🟢 Вебинар | Как живет РЕД ОС внутри облачной платформы VK Cloud | 03.06 → <a href="#">Зарегистрироваться</a>
+</div>
+
+<div class="header">
+    <div class="logo">РЕД <span>ОС</span></div>
+    <div class="nav">
+        <a href="#">Продукты</a>
+        <a href="#">Техподдержка</a>
+        <a href="#">База знаний</a>
+        <a href="#">Консалтинг</a>
+        <a href="#">Обучение</a>
+        <a href="#">Компания</a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="sidebar">
+        <div class="sidebar-title">База знаний</div>
+        <ul class="sidebar-menu">
+            <li><a href="#">О РЕД ОС</a></li>
+            <li><a href="#">РЕД ОС 7.3</a></li>
+            <li><a href="#">РЕД ОС 8</a></li>
+            <li><a href="#">Установка системы</a></li>
+            <li><a href="#">Администрирование</a></li>
+            <li><a href="#" style="color:#cc2b24; border-left-color:#cc2b24;">▶ Настройка даты и времени</a></li>
+            <li><a href="#">Установка и настройка chrony</a></li>
+            <li><a href="#">Утилита ntpdate</a></li>
+            <li><a href="#">Настройка systemd-timesyncd</a></li>
+            <li><a href="#">Утилита timedatectl</a></li>
+        </ul>
+    </div>
+
+    <div class="content">
+        <h1>2.9.10.4 Установка и настройка chrony</h1>
+
+        <div class="note">
+            📑 Содержание статьи:<br>
+            <a href="#install">▶ Установка и запуск</a><br>
+            <a href="#setup">▶ Настройка</a><br>
+            <a href="#manage">▶ Управление Chronyd</a>
+        </div>
+
+        <!-- Пример шпаргалки: слово Chrony с длинным текстом и переносом строк -->
+        <p>
+            <strong>
+                <span class="cheat-word" data-hint="ISP
+hostnamectl set-hostname ISP
+exec bash
+apt-get update
+apt-get install tzdata nftables -y
+timedatectl set-timezone Europe/Moscow
+
+mkdir /etc/net/ifaces/ens19
+mkdir /etc/net/ifaces/ens20
+TYPE=eth > /etc/net/ifaces/ens19/options 
+TYPE=eth > /etc/net/ifaces/ens20/options
+172.16.1.1/28 > /etc/net/ifaces/ens19/ipv4address 
+172.16.2.1/28 > /etc/net/ifaces/ens20/ipv4address
+systemctl restart network
+
+
+iptables –t nat –A POSTROUTING –o ens18 –j
+MASQUERADE
+iptables-save >> /etc/sysconfig/iptables
+systemctl enable --now iptables
+
+vim /etc/net/sysctl.conf
+net.ipv4.ip_forward = 1
+systemctl restart network
+">
+                    Chrony
+                </span>
+            </strong>
+            – альтернативный клиент и сервер протокола сетевого времени <strong>NTP</strong>. Chrony может быстрее синхронизировать системные часы с лучшей точностью времени, и он может быть особенно полезен для систем, которые не работают в сети все время.
+        </p>
+
+        <p><strong>Окружение:</strong></p>
+        <ul>
+            <li><strong>Версия ОС:</strong> 
+			<span class="cheat-word" data-hint="HQ-RTR
+hostname hq-rtr.au-team.irpo
+ip domain-name au-team.irpo
+
+ntp timezone utc+3
+
+username net_admin
+password P@ssw0rd
+role admin
+
+int ISP
+ip address 172.16.1.2/28
+ex
+int vl100
+ip address 172.16.1.2/28
+ex
+int vl200
+ip address 172.16.1.2/28
+ex
+int vl999
+ip address 172.16.1.2/28
+ex
+"> 7.3
+			</span>
+			</li>
+            <li><strong>Конфигурация ОС:</strong>
+			<span class="cheat-word" data-hint="port te0
+service-instance te0/ISP
+encapsulation untagged
+connect ip int ISP
+
+port te1
+service-instance te1/vl100
+encapsulation dot1q 100
+rewrite pop 1
+connect ip int vl100
+ex
+ 
+service-instance te1/vl200
+encapsulation dot1q 200
+rewrite pop 1
+connect ip int vl200
+ex
+
+service-instance te1/vl999
+encapsulation dot1q 999
+rewrite pop 1
+connect ip int vl999
+ex
+">
+			Рабочая станция
+			</span>
+			</li>
+            <li><strong>Редакция ОС:</strong> 
+			<span class="cheat-word" data-hint="
+ip pool dhcp 1
+range 192.168.1.34-192.168.1.62
+
+dhcp-server 1
+pool dhcp 64
+mask 255.255.255.224	
+gateway 192.168.1.33
+dns 192.168.1.2
+domain-name au-team.irpo
+
+interface e3
+dhcp-server 1
+
+ip nat pool nat 192.168.1.1-192.168.1.30,192.168.1.33-192.168.1.62,192.168.1.65-192.168.1.70
+ip nat source dynamic inside-to-outside pool nat overload interface e1
+
+ip route 0.0.0.0/0 172.16.1.1 description default
+
+interface tunnel.1
+ip add 192.168.10.1/30
+ip tunnel 172.16.1.2 172.16.2.2 mode gre
+">
+			Стандартная
+			</span>
+			</li>
+            <li><strong>Версия ПО:</strong> 
+                <span class="cheat-word" data-hint="router ospf 1
+passive-interface default
+no passive-interface tunnel.1
+network 192.168.10.0/30 area 0.0.0.0
+network 192.168.1.0/27 area 0.0.0.0
+network 192.168.1.32/27 area 0.0.0.0
+network 192.168.100.64/29 area 0.0.0.0
+area 0 authentication
+ex
+int tunnel.1
+ip ospf authentication-key P@ssw0rd
+ex
+write memory
+int ISP
+ip nat outside
+ex
+int vl100
+ip nat inside
+ex
+int vl200
+ip nat inside
+ex
+int vl999
+ip nat inside
+ex
+ip nat pool HQ 192.168.100.1-192.168.100.254
+ip nat source dynamic inside-to-outside pool HQ overload int ISP
+write memory 
+ip pool dhcp 1
+range 192.168.1.34-192.168.1.62
+
+ip pool HQ-Clients 192.168.100.65-192.168.100.77
+dhcp-server 1
+pool HQ-Clients 1
+mask 255.255.255.240
+gateway 192.168.1.33
+dns 192.168.1.2
+domain-name au-team.irpo
+ex
+int vl200
+dhcp-server 1
+ex
+">
+                    chrony-4.0-5
+                </span>
+            </li>
+        </ul>
+
+        <p>Основные преимущества:</p>
+        <ul>
+            <li><span class="cheat-word" data-hint="
+BR-RTR
+hostname br-rtr.au-team.irpo
+ip domain-name au-team.irpo
+ 
+ntp timezone utc+3
+
+username net_admin
+password P@ssw0rd
+role admin
+
+int ISP
+ip address 172.16.2.2/28
+ex
+int BR-SRV
+ip address 192.168.2.1/28
+
+port te0
+service-instance te0/ISP
+encapsulation untagged
+connect ip int ISP
+ex
+
+port te1
+service-instance te1/BR-SRV
+encapsulation untagged
+connect ip int BR-SRV
+
+interface tunnel.1
+ip add 192.168.10.2/30
+ip tunnel 172.16.2.2 172.16.1.2 mode gre
+
+">эффективная работа</span> в среде, <li><span class="cheat-word" data-hint="router ospf 1
+passive-interface default
+no passive-interface tunnel.1
+network 192.168.10.0/30 area 0.0.0.0
+network 192.168.2.0/28 area 0.0.0.0
+area 0 authentication
+ex
+int tunnel.1
+ip ospf authentication-key P@ssw0rd
+ex
+write memory
+
+int ISP
+ip nat outside
+ex
+int BR-SRV
+ip nat inside
+ex
+
+ip nat pool nat 192.168.2.1-192.168.2.14
+ip nat source dynamic inside-to-outside pool nat overload interface e1
+
+ip route 0.0.0.0/0 172.16.2.1 description default
+
+ip ospf authentication
+ip ospf authentication-key P@$$word
+
+
+			">где доступ</span>к временной связке прерывистый;</li>
+            <li><span class="cheat-word" data-hint="
+			HQ-CLI
+hostnamectl set-hostname hq-cli.au-team.irpo;exec bash
+
+timedatectl set-timezone Europe/Moscow
+
+vim /etc/net/ifaces/ens18/options
+NM_CONTROLLED=no
+DISABLED=no
+systemctl restart network
+
+			">адаптация</span> к внезапным изменениям частоты тактовых импульсов;</li>
+            <li><span class="cheat-word" data-hint="
+			BR-SRV
+hostnamectl set-hostname br-srv.au-team.irpo;exec bash
+
+timedatectl set-timezone Europe/Moscow
+
+useradd sshuser -u 2026 
+passwd sshuser
+gpasswd -a sshuser wheel
+echo 'sshuser ALL = (root) NOPASSWD: ALL' >> /etc/sudoers
+
+vim /etc/openssh/sshd_config
+Port 2026
+MaxAuthTries 2
+Banner /etc/openssh/banner
+AllowUsers sshuser
+echo Authorized access only > /etc/openssh/banner
+systemctl restart sshd
+
+vim /etc/net/ifaces/ens18/options
+BOOTPROTO=static
+echo 192.168.2.2/28 > /etc/net/ifaces/ens18/ipv4address
+echo default via 192.168.2.1 > /etc/net/ifaces/ens18/ipv4route
+systemctl restart network
+
+			">работа</span> в перегруженной сети, даже если перегрузка продолжается длительное время;</li>
+            <li><span class="cheat-word" data-hint="HQ-SRV
+hostnamectl set-hostname hq-srv.au-team.irpo;exec bash
+
+
+timedatectl set-timezone Europe/Moscow
+useradd -s /bin/bash -u 2026 sshuser
+echo &quot;sshuser:P@ssw0rd&quot; | chpasswd
+gpasswd -a sshuser wheel
+echo 'sshuser ALL = (root) NOPASSWD: ALL' &gt;&gt; /etc/sudoers
+			
+vim /etc/openssh/sshd_config
+Port 2026
+MaxAuthTries 2
+Banner /etc/openssh/banner
+AllowUsers sshuser
+echo Authorized access only > /etc/openssh/banner
+systemctl restart sshd
+
+vim /etc/net/ifaces/ens18/options
+BOOTPROTO=static
+echo 192.168.1.2/27 > /etc/net/ifaces/ens18/ipv4address
+echo default via 192.168.1.1 > /etc/net/ifaces/ens18/ipv4route
+systemctl restart network
+
+			">время</span> в конфигурации по умолчанию никогда не изменяется, чтобы не нарушать работу других запущенных программ;</li>
+            <li><span class="cheat-word" data-hint="apt-get update &amp;&amp; apt-get install dnsmasq -y
+echo 'OPTIONS=&quot;&quot;' &gt; /etc/sysconfig/dnsmasq
+systemctl restart network
+cat &lt;&lt;'EOT' &gt; /etc/dnsmasq.conf
+no-resolv
+no-poll
+no-hosts
+server=77.88.8.7
+server=195.208.4.1
+server=8.8.8.8
+			
+cache-size=1000
+all-servers
+no-negcache
+			
+host-record=hq-rtr.au-team.irpo,192.168.1.1
+host-record=hq-srv.au-team.irpo,192.168.1.2
+host-record=hq-cli.au-team.irpo,192.168.1.34
+address=/br-rtr.au-team.irpo/192.168.2.1
+address=/br-srv.au-team.irpo/192.168.2.2
+address=/docker.au-team.irpo/172.16.1.1
+address=/web.au-team.irpo/172.16.2.1
+EOT\nsystemctl enable --now dnsmasq">использование</span> меньшего объема памяти и запуск процессов только при необходимости в целях экономии энергии.</li>
+        </ul>
+
+        <div class="note">
+            📺 Обучающие видео:<br>
+            • <a href="#">RuTube — Настройка синхронизации времени</a><br>
+            • <a href="#">Яндекс.Дзен — Настройка синхронизации времени</a><br>
+            • <a href="#">VK Видео — Настройка синхронизации времени</a>
+        </div>
+
+        <a id="install"></a>
+        <h3>Установка и запуск</h3>
+        <p>Действия по установке и настройке требуется производить под пользователем <strong>root</strong> или пользователем с правами администратора.</p>
+        <p>В РЕД ОС сервис <strong>Chrony</strong> уже установлен и запущен по умолчанию.</p>
+        <p>Для проверки статуса сервиса выполните команду:</p>
+        <pre>systemctl status chronyd.service</pre>
+        <p>Если требуется переустановка необходимо выполнить следующую команду:</p>
+        <pre>sudo dnf install chrony</pre>
+        <p>После установки необходимо добавить сервис <strong class="cheat-word" data-hint="chronyd.service — системная служба chrony">chronyd.service</strong> в автозагрузку и запустить его командой:</p>
+        <pre>systemctl enable --now chronyd.service</pre>
+
+        <a id="setup"></a>
+        <h3>Настройка</h3>
+        <p>Клиенты <strong>NTP</strong> должны знать, с какими серверами <strong>NTP</strong> они должны связаться, чтобы получить текущее время. Серверы <strong>NTP</strong> могут быть указаны в директиве <strong>server</strong> в файле конфигурации <strong>NTP</strong>.</p>
+        <p>Отредактируйте конфигурационный файл <strong>/etc/chrony.conf</strong> для добавления/удаления серверов.</p>
+        <p>Данные по умолчанию:</p>
+        <div class="code-block">
+            # Use public servers from the pool. ntp.org project.<br>
+            # Please consider joining the pool (http://www.pool.ntp.org/join.html).<br>
+            server ntp1.vniiftri.ru iburst<br>
+            server ntp2.vniiftri.ru iburst<br>
+            server ntp3.vniiftri.ru iburst<br>
+            server ntp4.vniiftri.ru iburst
+        </div>
+        <p>Параметр <strong>iburst</strong> используется для ускорения начальной синхронизации.</p>
+
+        <a id="manage"></a>
+        <h3>Управление Chronyd</h3>
+        <p>Для <strong>chrony</strong> есть утилита командной строки с именем <strong class="cheat-word" data-hint="chronyc — консольная утилита для управления chrony\nИнтерактивный режим: просто chronyc\nПрямые команды: chronyc команда">chronyc</strong> для управления и мониторинга сервиса <strong>chrony (chronyd)</strong>.</p>
+        <p>Для проверки синхронизации <strong>chrony</strong>, можно использовать команду <code>tracking</code>, как показано ниже:</p>
+        <pre>chronyc tracking</pre>
+        <p>Вывод должен выглядеть следующим образом:</p>
+        <pre>Reference ID    : 596DFB17 (ntp3.vniiftri.ru)
+Stratum         : 2
+Ref time (UTC)  : Mon Nov 24 11:33:51 2025
+System time     : 0.000296847 seconds slow of NTP time
+Last offset     : -0.000279008 seconds
+RMS offset      : 0.000883618 seconds
+Frequency       : 7.163 ppm slow
+Residual freq   : -0.042 ppm
+Skew            : 1.210 ppm
+Root delay      : 0.021864666 seconds
+Root dispersion : 0.000720939 seconds
+Update interval : 64.3 seconds
+Leap status     : Normal</pre>
+
+        <p>Перечисленные пункты содержат следующую информацию:</p>
+        <ul>
+            <li><strong>Reference ID</strong> — идентификатор и имя сервера, с которым компьютер в настоящее время синхронизирован;</li>
+            <li><strong>Stratum</strong> — количество переходов к серверу с установленными эталонными часами;</li>
+            <li><strong>Ref time</strong> — время по Гринвичу, в которое было выполнено последнее измерение из эталонного источника;</li>
+            <li><strong>System time</strong> — задержка системных часов от синхронизированного сервера;</li>
+            <li><strong>Last offset</strong> — расчетное смещение последнего обновления часов;</li>
+            <li><strong>RMS offset</strong> — долгосрочное среднее арифметическое значения смещения;</li>
+            <li><strong>Frequency</strong> — частота, на которой часы системы будут работать неправильно, если хронограф не проведет коррекцию. Выражена в ppm (частей на миллион);</li>
+            <li><strong>Residual freq</strong> — остаточная частота, указывающая на разницу между измерениями от опорного источника и используемой в настоящее время частотой;</li>
+            <li><strong>Skew</strong> — расчетная погрешность, связанная с погрешностью частоты;</li>
+            <li><strong>Root delay</strong> — суммарная задержка сетевого пути к опорному серверу;</li>
+            <li><strong>Leap status</strong> — статус скачка времени, который может иметь одно из следующих значений:
+                <ul>
+                    <li><em>«Normal»</em> – нормальная корректировка времени;</li>
+                    <li><em>«Insert second»</em> – добавление дополнительной секунды;</li>
+                    <li><em>«Delete second»</em> – удаление дополнительной секунды;</li>
+                    <li><em>«Not synchronised»</em> – компьютер не синхронизирован.</li>
+                </ul>
+            </li>
+        </ul>
+
+        <p>Также есть возможность проверить текущие источники времени, которые использует <strong>chrony</strong>:</p>
+        <pre>chronyc sources</pre>
+        <p>Вывод должен выглядеть следующим образом:</p>
+        <pre>MS Name/IP address         Stratum Poll Reach LastRx Last sample               
+===============================================================================
+^+ ntp1.vniiftri.ru              1   6   272   271   -264us[ +347us] +/- 7394us
+^+ ntp2.vniiftri.ru              1   6   377    77  +2910us[+3321us] +/- 9806us
+^* ntp3.vniiftri.ru              1   6   377    13   +848us[+1296us] +/- 6958us
+^+ ntp4.vniiftri.ru              1   6   377    11   +895us[ +895us] +/- 6879us</pre>
+
+        <p>Утилита <strong>Chronyc</strong> может находить статистику каждого источника, например, скорость дрейфа и процесс оценки смещения, используя команду <strong>sourcestats</strong>:</p>
+        <pre>chronyc sourcestats</pre>
+        <p>Вывод должен выглядеть следующим образом:</p>
+        <pre>Name/IP Address            NP  NR  Span  Frequency  Freq Skew  Offset  Std Dev
+==============================================================================
+ntp1.vniiftri.ru            7   5   517     -1.228      4.945  -1149us   242us
+ntp2.vniiftri.ru            7   5   388     +4.855     22.098  +1466us  1091us
+ntp3.vniiftri.ru           11   9   646     +1.307      6.637  -5544ns  1036us
+ntp4.vniiftri.ru           11   7   647     +1.544      3.566   +599us   501us</pre>
+
+        <p>Чтобы сообщить <strong>Chrony</strong>, что вы больше не подключены к глобальной сети Интернет, выполните следующие действия:</p>
+        <pre>chronyc offline</pre>
+
+        <p>Для проверки статуса источников <strong>NTP</strong>, необходимо запустить следующую команду:</p>
+        <pre>chronyc activity</pre>
+        <p>Вывод должен выглядеть следующим образом:</p>
+        <pre>200 OK
+4 sources online
+0 sources offline
+0 sources doing burst (return to online)
+0 sources doing burst (return to offline)
+0 sources with unknown address</pre>
+
+        <p>Когда система будет вновь подключена к Интернету, необходимо сообщить об этом <strong>chrony</strong>, используя команду:</p>
+        <pre>chronyc online</pre>
+
+        <p>Для более подробного объяснения всех параметров следует руководствоваться справочными страницами:</p>
+        <pre>man chronyc
+man chronyd</pre>
+
+        <hr>
+
+        <p><small><strong>Дата последнего изменения:</strong> 24.04.2026</small></p>
+
+    </div>
+</div>
+
+<div class="footer">
+    © РЕД СОФТ 2014-2026 | <a href="#">red-soft.ru</a> | <a href="#">Политика конфиденциальности</a>
+</div>
+
+<script>
+    // ========== СКРИПТ ДЛЯ РАМОК ПО КЛИКУ ==========
+    (function() {
+        // Находим все слова с классом cheat-word
+        const cheatWords = document.querySelectorAll('.cheat-word');
+        let currentPopup = null;      // текущий открытый элемент рамки
+        let closeTimeout = null;      // таймер закрытия
+
+        // Функция для закрытия любой открытой рамки
+        function closeAllPopups() {
+            if (closeTimeout) {
+                clearTimeout(closeTimeout);
+                closeTimeout = null;
+            }
+            if (currentPopup) {
+                currentPopup.classList.remove('show-popup');
+                currentPopup = null;
+            }
+        }
+
+        // Обработчик клика по слову
+        cheatWords.forEach(word => {
+            word.addEventListener('click', function(event) {
+                event.stopPropagation();   // чтобы клик не закрыл рамку сразу
+
+                // Если кликнули на уже открытое слово — закрываем его и выходим
+                if (currentPopup === this) {
+                    closeAllPopups();
+                    return;
+                }
+
+                // Закрываем текущую рамку, если она есть
+                closeAllPopups();
+
+                // Создаём элемент рамки, если его ещё нет
+                let popup = this.querySelector('.cheat-popup');
+                if (!popup) {
+                    popup = document.createElement('div');
+                    popup.className = 'cheat-popup';
+                    popup.textContent = this.getAttribute('data-hint');
+                    this.appendChild(popup);
+                }
+
+                // Показываем рамку
+                this.classList.add('show-popup');
+                currentPopup = this;
+
+                // Позиционируем рамку под словом
+                const rect = this.getBoundingClientRect();
+                popup.style.top = (rect.bottom + 8) + 'px';
+                popup.style.left = rect.left + 'px';
+
+                // Корректировка, если рамка вылезает за правый край
+                setTimeout(() => {
+                    const popupRect = popup.getBoundingClientRect();
+                    if (popupRect.right > window.innerWidth) {
+                        popup.style.left = (window.innerWidth - popupRect.width - 15) + 'px';
+                    }
+                }, 5);
+
+                // Устанавливаем таймер на автоматическое закрытие через 4 секунды
+                closeTimeout = setTimeout(() => {
+                    if (currentPopup) {
+                        currentPopup.classList.remove('show-popup');
+                        currentPopup = null;
+                    }
+                    closeTimeout = null;
+                }, 4000);
+            });
+        });
+
+        // Клик в любом месте страницы (кроме слов) закрывает текущую рамку
+        document.body.addEventListener('click', function(event) {
+            let target = event.target;
+            let isCheatWord = false;
+            // Проверяем, был ли клик по элементу с классом cheat-word или внутри него
+            while (target) {
+                if (target.classList && target.classList.contains('cheat-word')) {
+                    isCheatWord = true;
+                    break;
+                }
+                target = target.parentElement;
+            }
+            if (!isCheatWord) {
+                closeAllPopups();
+            }
+        });
+    })();
+</script>
+
+</body>
+</html>
