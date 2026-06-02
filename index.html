@@ -726,16 +726,157 @@ Leap status     : Normal</pre>
 
         <p>Перечисленные пункты содержат следующую информацию:</p>
         <ul>
-            <li><strong>Reference ID</strong> — идентификатор и имя сервера, с которым компьютер в настоящее время синхронизирован;</li>
-            <li><strong>Stratum</strong> — количество переходов к серверу с установленными эталонными часами;</li>
-            <li><strong>Ref time</strong> — время по Гринвичу, в которое было выполнено последнее измерение из эталонного источника;</li>
-            <li><strong>System time</strong> — задержка системных часов от синхронизированного сервера;</li>
-            <li><strong>Last offset</strong> — расчетное смещение последнего обновления часов;</li>
-            <li><strong>RMS offset</strong> — долгосрочное среднее арифметическое значения смещения;</li>
-            <li><strong>Frequency</strong> — частота, на которой часы системы будут работать неправильно, если хронограф не проведет коррекцию. Выражена в ppm (частей на миллион);</li>
-            <li><strong>Residual freq</strong> — остаточная частота, указывающая на разницу между измерениями от опорного источника и используемой в настоящее время частотой;</li>
-            <li><strong>Skew</strong> — расчетная погрешность, связанная с погрешностью частоты;</li>
-            <li><strong>Root delay</strong> — суммарная задержка сетевого пути к опорному серверу;</li>
+            <li><strong><span class="cheat-word" data-hint="HQ-CLI
+Apt-get update && apt-get install yandex-browser-stable -y
+
+mkdir /mnt/nfs
+chmod 777 /mnt/nfs
+vim /etc/fstab   hq-srv.au-team.irpo:/raid5/nfs	mnt/nfs	nfs	defaults   0	0
+mount -a
+">Reference ID</span></strong> — идентификатор и имя сервера, с которым компьютер в настоящее время синхронизирован;</li>
+            <li><strong><span class="cheat-word" data-hint="ISP
+vim /etc/chrony.conf 
+server 127.0.0.1 iburst
+local stratum 5
+allow 0.0.0.0/0
+">Stratum</span></strong> — количество переходов к серверу с установленными эталонными часами;</li>
+            <li><strong><span class="cheat-word" data-hint="HQ-SRV
+apt-get install mdadm -y 
+lsblk 
+mdadm - -create /dev/md0 -l5 -n 3 /dev/sdb /dev/sdc /dev/sdd
+mkfs.ext4 /dev/md0
+mkdir /etc/mdadm
+vim /etc/mdadm/mdadm.conf
+DEVICE partitions
+mdadm - -detail  - -scan 
+mkdir /raid5
+vim /etc/fstab        /dev/md0  	/raid5	ext4	defaults	0	0
+mount -av
+
+apt-get install nfs-server nfs-utils -y
+mkdir /raid5/nfs
+chmod 777 /raid5/nfs
+vim /etc/exports    /raid5/nfs 192.168.100.64/28(sync, rw, no_root_squash)
+systemctl enable - - now nfs-server
+">Ref time</span></strong> — время по Гринвичу, в которое было выполнено последнее измерение из эталонного источника;</li>
+            <li><strong><span class="cheat-word" data-hint="Vim /etc/chrony.conf
+#pool pool.ntp.org iburst
+Pool 172.16.4.1 iburst
+System restart chronyd
+
+apt-get install –y apache2 php8.2 apache2-mods apache2-mod_
+php8.2 php8.2-libs mariadb-server php8.2-opcache php8.2-curl
+php8.2-gd
+php8.2-intl
+php8.2-mysqlnd-mysqli
+php8.2-zip php8.2-soap php8.2-mbstring
+fileinfo php8.2-sodium
+
+systemctl enable --now httpd2 mariadb
+mariadb -u root
+create database moodle; 
+create user moodle identified by ‘P@ssw0rd’;
+grant all privileges on moodle.* to moodle;
+flush privileges;
+">System time</span></strong> — задержка системных часов от синхронизированного сервера;</li>
+            <li><strong><span class="cheat-word" data-hint="apt-get install -y nginx
+vim /etc/nginx/nginx.conf
+http {
+server {
+listen 80; # Слушаем на 80 порту для HTTP
+server_name moodle.au-team.irpo; # Указываем первое доменное имя
+location / {
+proxy_pass http://192.168.10.1:80; # Перенаправление
+на указанный адрес и порт
+proxy_set_header Host $host; # Пробрасываем заголовок Host
+proxy_set_header X-Real-IP $remote_addr; # Пробрасываем IP
+клиента
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#Пробрасываем заголовок X-Forwarded-For
+proxy_set_header X-Forwarded-Proto $scheme; #Пробрасываем схему
+запроса
+}
+}
+server {
+listen 80; # Слушаем на 80 порту для HTTP
+server_name wiki.au-team.irpo; # Указываем второе доменное имя
+location / {
+">Last offset</span></strong> — расчетное смещение последнего обновления часов;</li>
+            <li><strong><span class="cheat-word" data-hint="proxy_pass http://192.168.5.1:8080; # Перенаправление
+на указанный адрес и порт
+proxy_set_header Host $host; # Пробрасываем заголовок Host
+proxy_set_header X-Real-IP $remote_addr; # Пробрасываем IP
+клиента
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#Пробрасываем заголовок X-Forwarded-For
+proxy_set_header X-Forwarded-Proto $scheme; # Пробрасываем
+схему запроса
+}
+}
+}
+
+systemctl enable --now nginx
+">RMS offset</span></strong> — долгосрочное среднее арифметическое значения смещения;</li>
+            <li><strong><span class="cheat-word" data-hint="BR-SRV
+Vim /etc/chrony.conf
+#pool pool.ntp.org iburst
+Pool 172.16.4.1 iburst
+System restart chronyd
+
+Apt-get update && apt-get install ansible sshpass -y
+Vim /etc/ansible/hosts
+[hq]
+Hq-srv ansible_port=2024 ansible_ssh_user=sshuser ansible_ssh_pass=P@ssw0rd
+Hq-cli ansible_ssh_user=user ansible_ssh_pass=resu
+
+mkdir /etc/root/wiki.yml
+services:
+mariadb:
+image: mariadb:latest
+environment:
+— MYSQL_ROOT_PASSWORD=toor
+— MYSQL_DATABASE=mediawiki
+— MYSQL_USER=wiki
+— MYSQL_PASSWORD=WikiP@ssw0rd
+">Frequency</span></strong> — частота, на которой часы системы будут работать неправильно, если хронограф не проведет коррекцию. Выражена в ppm (частей на миллион);</li>
+            <li><strong><span class="cheat-word" data-hint="mediawiki:
+image: mediawiki:latest
+ports:
+— «8080:80»
+environment:
+— MEDIAWIKI_DB_TYPE=mysql
+— MEDIAWIKI_DB_HOST=mariadb
+— MEDIAWIKI_DB_USER=wiki
+— MEDIAWIKI_DB_PASSWORD=WikiP@ssw0rd
+— MEDIAWIKI_DB_NAME=mediawiki
+# volumes: [/root/mediawiki/LocalSettings.php:/var/www/html/
+LocalSettings.php]
+volumes:
+mediawiki_data:
+mariadb_data:
+
+Apt-get install docker-engine doker-compose -y
+Systemctl enable - - now docker.service
+
+docker compose –f /root/wiki.yml up -d
+docker compose -f wiki.yml stop
+docker compose -f wiki.yml up -d
+">Residual freq</span></strong> — остаточная частота, указывающая на разницу между измерениями от опорного источника и используемой в настоящее время частотой;</li>
+            <li><strong><span class="cheat-word" data-hint="HQ-RTR
+Ntp server 172.16.5.1
+
+ip nat source static tcp 192.168.1.2 80 172.16.1.2 8080
+ip nat source static tcp 192.168.1.2 2026 172.16.1.2 2026
+write memory
+">Skew</span></strong> — расчетная погрешность, связанная с погрешностью частоты;</li>
+            <li><strong><span class="cheat-word" data-hint="BR-RTR
+ntp server 172.16.5.1
+
+ip nat source static tcp 192.168.2.2 8080 172.16.2.2 8080
+ip nat source static tcp 192.168.2.2 2026 172.16.2.2 2026
+write memory
+
+">Root delay</span></strong> — суммарная задержка сетевого пути к опорному серверу;</li>
             <li><strong>Leap status</strong> — статус скачка времени, который может иметь одно из следующих значений:
                 <ul>
                     <li><em>«Normal»</em> – нормальная корректировка времени;</li>
@@ -994,59 +1135,6 @@ man chronyd</pre>
 </style>
 </head>
 <body>
-<div class="content-container">
-  <!-- Оригинальная статья: https://itproblog.ru/настройка-статического-ip-адреса-альт-с/ -->
-  <p><em>Источник: <a href="https://itproblog.ru/%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-%D1%81%D1%82%D0%B0%D1%82%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%BE%D0%B3%D0%BE-ip-%D0%B0%D0%B4%D1%80%D0%B5%D1%81%D0%B0-%D0%B0%D0%BB%D1%8C%D1%82-%D1%81/" target="_blank" rel="noopener noreferrer">itproblog.ru</a> · Роман, 16.07.2022</em></p>
 
-  <h1>Настройка статического IP-адреса Альт Сервер 10</h1>
-  
-  <p><strong>Эта микростатья (или даже шпаргалка)</strong> кратко показывает, как выполняется настройка статического IP-адреса Альт Сервер 10. По настройке сети на сайте вендора есть краткое руководство для начинающих. Но я сделаю совсем краткую выдержку — только непосредственные команды по настройке.</p>
-  
-  <p>Если вы используете сервер с графическим интерфейсом и NetworkManager, то можете использовать <a href="#">вот это руководство</a>. В моём случае сервер без графического интерфейса в режиме минимальной конфигурации.</p>
-  
-  <hr />
-  
-  <h2>Настройка статического IP-адреса Альт Сервер 10</h2>
-  
-  <p>Выполните аутентификацию в операционной системе и перейдите в режим привилегированного пользователя:</p>
-  <pre><code>su -</code></pre>
-  
-  <p>Выясним название нашего сетевого интерфейса:</p>
-  <pre><code>ip addr show</code></pre>
-  <p>Имя моего сетевого адаптера — <code>ens33</code> (оно пригодится далее). У вас адаптер может называться, например, <code>eth0</code>.</p>
-  
-  <p>Отключаем сетевой адаптер:</p>
-  <pre><code>ip link set ens33 down</code></pre>
-  
-  <p>Задаём параметры статической адресации:</p>
-  <pre><code>echo 10.10.10.199/24 > /etc/net/ifaces/ens33/ipv4address
-echo default via 10.10.10.254 > /etc/net/ifaces/ens33/ipv4route</code></pre>
-  
-  <p>Редактируем файл options — меняем строчку «BOOTPROTO=dhcp» на «BOOTPROTO=static»:</p>
-  <pre><code>vim /etc/net/ifaces/ens33/options</code></pre>
-  <p>Содержимое должно выглядеть примерно так:</p>
-  <pre><code>BOOTPROTO=static
-TYPE=eth
-CONFIG_WIRELESS=no
-SYSTEMD_BOOTPROTO=dhcp4
-CONFIG_IPV4=yes
-DISABLED=no
-NM_CONTROLLED=no
-SYSTEMD_CONTROLLED=no</code></pre>
-  
-  <p>Перезапускаем сетевую службу (или полностью перезагружаем сервер):</p>
-  <pre><code>service network restart</code></pre>
-  
-  <hr />
-  
-  <h2>Настройка DNS-клиента</h2>
-  
-  <p>Статический IP-адрес мы настроили выше. Последний штрих — нужно указать адрес DNS-сервера. Добавим адрес нужного нам DNS-сервера в конфигурационный файл resolv.conf:</p>
-  <pre><code>echo nameserver 8.8.8.8 > /etc/resolv.conf</code></pre>
-  
-  <div class="footnote">
-    ⚠️ <strong>Примечание:</strong> команды и пути адаптированы под сетевую подсистему etcnet (папка <code>/etc/net/ifaces/&lt;интерфейс&gt;</code>). Для новых версий Альт Сервер также может использоваться NetworkManager — в таком случае настройки выполняются через <code>nmcli</code>.
-  </div>
-</div>
 </body>
 </html>
