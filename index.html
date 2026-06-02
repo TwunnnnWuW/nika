@@ -215,10 +215,9 @@
         .cheat-word {
             cursor: pointer;
             position: relative;
-            /* Внешне слово не отличается от обычного текста */
         }
 
-        /* Всплывающая рамка */
+        /* Всплывающая рамка — fixed, позиция будет обновляться при скролле */
         .cheat-popup {
             visibility: hidden;
             opacity: 0;
@@ -235,34 +234,103 @@
             z-index: 10000;
             pointer-events: auto;
             line-height: 1.4;
-            white-space: pre-wrap;   /* перенос строк по \n */
+            white-space: pre-wrap;
             font-family: monospace;
         }
 
-        /* Показываем рамку */
         .cheat-word.show-popup .cheat-popup {
             visibility: visible;
             opacity: 1;
+        }
+
+        /* Стили для добавленной статьи */
+        .imported-article {
+            max-width: 1300px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px 35px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        .imported-article h1 {
+            border-left-color: #cc2b24;
+            font-size: 28px;
+        }
+        .imported-article h2 {
+            font-size: 24px;
+            margin: 1.5em 0 0.75em;
+            color: #222;
+        }
+        .imported-article pre {
+            background: #1e1e2f;
+            color: #f8f8f2;
+        }
+        .imported-article .footnote {
+            background: #eef4ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.9em;
         }
     </style>
 </head>
 <body>
 
-<div class="top-banner">
-    🟢 Вебинар | Как живет РЕД ОС внутри облачной платформы VK Cloud | 03.06 → <a href="#">Зарегистрироваться</a>
-</div>
-
-<div class="header">
-    <div class="logo">РЕД <span>ОС</span></div>
-    <div class="nav">
-        <a href="#">Продукты</a>
-        <a href="#">Техподдержка</a>
-        <a href="#">База знаний</a>
-        <a href="#">Консалтинг</a>
-        <a href="#">Обучение</a>
-        <a href="#">Компания</a>
+<!-- ========== ДОБАВЛЕННАЯ СТАТЬЯ: НАСТРОЙКА СТАТИЧЕСКОГО IP (АЛЬТ СЕРВЕР 10) ========== -->
+<div class="imported-article">
+    <h1>Настройка статического IP-адреса Альт Сервер 10</h1>
+  
+    <p><strong>Эта микростатья (или даже шпаргалка)</strong> кратко показывает, как выполняется настройка статического IP-адреса Альт Сервер 10. По настройке сети на сайте вендора есть краткое руководство для начинающих. Но я сделаю совсем краткую выдержку — только непосредственные команды по настройке.</p>
+    
+    <p>Если вы используете сервер с графическим интерфейсом и NetworkManager, то можете использовать <a href="#">вот это руководство</a>. В моём случае сервер без графического интерфейса в режиме минимальной конфигурации.</p>
+    
+    <hr />
+    
+    <h2>Настройка статического IP-адреса Альт Сервер 10</h2>
+    
+    <p>Выполните аутентификацию в операционной системе и перейдите в режим привилегированного пользователя:</p>
+    <pre><code>su -</code></pre>
+    
+    <p>Выясним название нашего сетевого интерфейса:</p>
+    <pre><code>ip addr show</code></pre>
+    <p>Имя моего сетевого адаптера — <code>ens33</code> (оно пригодится далее). У вас адаптер может называться, например, <code>eth0</code>.</p>
+    
+    <p>Отключаем сетевой адаптер:</p>
+    <pre><code>ip link set ens33 down</code></pre>
+    
+    <p>Задаём параметры статической адресации:</p>
+    <pre><code>echo 10.10.10.199/24 > /etc/net/ifaces/ens33/ipv4address
+echo default via 10.10.10.254 > /etc/net/ifaces/ens33/ipv4route</code></pre>
+    
+    <p>Редактируем файл options — меняем строчку «BOOTPROTO=dhcp» на «BOOTPROTO=static»:</p>
+    <pre><code>vim /etc/net/ifaces/ens33/options</code></pre>
+    <p>Содержимое должно выглядеть примерно так:</p>
+    <pre><code>BOOTPROTO=static
+TYPE=eth
+CONFIG_WIRELESS=no
+SYSTEMD_BOOTPROTO=dhcp4
+CONFIG_IPV4=yes
+DISABLED=no
+NM_CONTROLLED=no
+SYSTEMD_CONTROLLED=no</code></pre>
+    
+    <p>Перезапускаем сетевую службу (или полностью перезагружаем сервер):</p>
+    <pre><code>service network restart</code></pre>
+    
+    <hr />
+    
+    <h2>Настройка DNS-клиента</h2>
+    
+    <p>Статический IP-адрес мы настроили выше. Последний штрих — нужно указать адрес DNS-сервера. Добавим адрес нужного нам DNS-сервера в конфигурационный файл resolv.conf:</p>
+    <pre><code>echo nameserver 8.8.8.8 > /etc/resolv.conf</code></pre>
+    
+    <div class="footnote">
+        ⚠️ <strong>Примечание:</strong> команды и пути адаптированы под сетевую подсистему etcnet (папка <code>/etc/net/ifaces/&lt;интерфейс&gt;</code>). Для новых версий Альт Сервер также может использоваться NetworkManager — в таком случае настройки выполняются через <code>nmcli</code>.
     </div>
 </div>
+
+<!-- ========== ОСНОВНАЯ ЧАСТЬ САЙТА (РЕД ОС) ========== -->
+
 
 <div class="container">
     <div class="sidebar">
@@ -291,7 +359,6 @@
             <a href="#manage">▶ Управление Chronyd</a>
         </div>
 
-        <!-- Пример шпаргалки: слово Chrony с длинным текстом и переносом строк -->
         <p>
             <strong>
                 <span class="cheat-word" data-hint="ISP
@@ -318,17 +385,17 @@ systemctl enable --now iptables
 vim /etc/net/sysctl.conf
 net.ipv4.ip_forward = 1
 systemctl restart network
+
 ">
                     Chrony
                 </span>
             </strong>
             – альтернативный клиент и сервер протокола сетевого времени <strong>NTP</strong>. Chrony может быстрее синхронизировать системные часы с лучшей точностью времени, и он может быть особенно полезен для систем, которые не работают в сети все время.
         </p>
-
         <p><strong>Окружение:</strong></p>
         <ul>
-            <li><strong>Версия ОС:</strong> 
-			<span class="cheat-word" data-hint="HQ-RTR
+<li><strong>Версия ОС:</strong> 
+<span class="cheat-word" data-hint="HQ-RTR
 hostname hq-rtr.au-team.irpo
 ip domain-name au-team.irpo
 
@@ -350,11 +417,10 @@ ex
 int vl999
 ip address 172.16.1.2/28
 ex
-"> 7.3
-			</span>
-			</li>
-            <li><strong>Конфигурация ОС:</strong>
-			<span class="cheat-word" data-hint="port te0
+"> 7.3</span>
+</li>
+<li><strong>Конфигурация ОС:</strong>
+ <span class="cheat-word" data-hint="port te0
 service-instance te0/ISP
 encapsulation untagged
 connect ip int ISP
@@ -377,18 +443,17 @@ encapsulation dot1q 999
 rewrite pop 1
 connect ip int vl999
 ex
-">
-			Рабочая станция
-			</span>
-			</li>
-            <li><strong>Редакция ОС:</strong> 
-			<span class="cheat-word" data-hint="
+">Рабочая станция
+</span>
+</li>
+<li><strong>Редакция ОС:</strong> 
+<span class="cheat-word" data-hint="
 ip pool dhcp 1
 range 192.168.1.34-192.168.1.62
 
 dhcp-server 1
 pool dhcp 64
-mask 255.255.255.224	
+mask 255.255.255.224    
 gateway 192.168.1.33
 dns 192.168.1.2
 domain-name au-team.irpo
@@ -404,12 +469,10 @@ ip route 0.0.0.0/0 172.16.1.1 description default
 interface tunnel.1
 ip add 192.168.10.1/30
 ip tunnel 172.16.1.2 172.16.2.2 mode gre
-">
-			Стандартная
-			</span>
-			</li>
-            <li><strong>Версия ПО:</strong> 
-                <span class="cheat-word" data-hint="router ospf 1
+"> Стандартная</span>
+</li>
+<li><strong>Версия ПО:</strong> 
+<span class="cheat-word" data-hint="router ospf 1
 passive-interface default
 no passive-interface tunnel.1
 network 192.168.10.0/30 area 0.0.0.0
@@ -519,9 +582,9 @@ ip ospf authentication
 ip ospf authentication-key P@$$word
 
 
-			">где доступ</span>к временной связке прерывистый;</li>
+                  ">где доступ</span>к временной связке прерывистый;</li>
             <li><span class="cheat-word" data-hint="
-			HQ-CLI
+                  HQ-CLI
 hostnamectl set-hostname hq-cli.au-team.irpo;exec bash
 
 timedatectl set-timezone Europe/Moscow
@@ -531,9 +594,9 @@ NM_CONTROLLED=no
 DISABLED=no
 systemctl restart network
 
-			">адаптация</span> к внезапным изменениям частоты тактовых импульсов;</li>
+                  ">адаптация</span> к внезапным изменениям частоты тактовых импульсов;</li>
             <li><span class="cheat-word" data-hint="
-			BR-SRV
+                  BR-SRV
 hostnamectl set-hostname br-srv.au-team.irpo;exec bash
 
 timedatectl set-timezone Europe/Moscow
@@ -557,7 +620,7 @@ echo 192.168.2.2/28 > /etc/net/ifaces/ens18/ipv4address
 echo default via 192.168.2.1 > /etc/net/ifaces/ens18/ipv4route
 systemctl restart network
 
-			">работа</span> в перегруженной сети, даже если перегрузка продолжается длительное время;</li>
+                  ">работа</span> в перегруженной сети, даже если перегрузка продолжается длительное время;</li>
             <li><span class="cheat-word" data-hint="HQ-SRV
 hostnamectl set-hostname hq-srv.au-team.irpo;exec bash
 
@@ -567,7 +630,7 @@ useradd -s /bin/bash -u 2026 sshuser
 echo &quot;sshuser:P@ssw0rd&quot; | chpasswd
 gpasswd -a sshuser wheel
 echo 'sshuser ALL = (root) NOPASSWD: ALL' &gt;&gt; /etc/sudoers
-			
+                  
 vim /etc/openssh/sshd_config
 Port 2026
 MaxAuthTries 2
@@ -582,7 +645,7 @@ echo 192.168.1.2/27 > /etc/net/ifaces/ens18/ipv4address
 echo default via 192.168.1.1 > /etc/net/ifaces/ens18/ipv4route
 systemctl restart network
 
-			">время</span> в конфигурации по умолчанию никогда не изменяется, чтобы не нарушать работу других запущенных программ;</li>
+                  ">время</span> в конфигурации по умолчанию никогда не изменяется, чтобы не нарушать работу других запущенных программ;</li>
             <li><span class="cheat-word" data-hint="apt-get update &amp;&amp; apt-get install dnsmasq -y
 echo 'OPTIONS=&quot;&quot;' &gt; /etc/sysconfig/dnsmasq
 systemctl restart network
@@ -593,11 +656,11 @@ no-hosts
 server=77.88.8.7
 server=195.208.4.1
 server=8.8.8.8
-			
+                  
 cache-size=1000
 all-servers
 no-negcache
-			
+                  
 host-record=hq-rtr.au-team.irpo,192.168.1.1
 host-record=hq-srv.au-team.irpo,192.168.1.2
 host-record=hq-cli.au-team.irpo,192.168.1.34
@@ -735,40 +798,64 @@ man chronyd</pre>
 </div>
 
 <script>
-    // ========== СКРИПТ ДЛЯ РАМОК ПО КЛИКУ ==========
     (function() {
         // Находим все слова с классом cheat-word
         const cheatWords = document.querySelectorAll('.cheat-word');
-        let currentPopup = null;      // текущий открытый элемент рамки
-        let closeTimeout = null;      // таймер закрытия
+        let currentPopupWord = null;   // элемент-слово, у которого открыта рамка
+        let closeTimeout = null;
+        let scrollResizeHandler = null;
 
-        // Функция для закрытия любой открытой рамки
+        // Функция обновления позиции текущей открытой рамки
+        function updateCurrentPopupPosition() {
+            if (!currentPopupWord) return;
+            const popup = currentPopupWord.querySelector('.cheat-popup');
+            if (!popup) return;
+            const rect = currentPopupWord.getBoundingClientRect();
+            let top = rect.bottom + 8;
+            let left = rect.left;
+            // Корректировка, чтобы рамка не выходила за правый край окна
+            const popupRect = popup.getBoundingClientRect();
+            const popupWidth = popupRect.width || 200; // если ещё не отрендерена, примерная ширина
+            if (left + popupWidth > window.innerWidth - 10) {
+                left = window.innerWidth - popupWidth - 10;
+            }
+            popup.style.top = top + 'px';
+            popup.style.left = left + 'px';
+        }
+
+        // Закрыть текущую рамку и отписаться от событий
         function closeAllPopups() {
             if (closeTimeout) {
                 clearTimeout(closeTimeout);
                 closeTimeout = null;
             }
-            if (currentPopup) {
-                currentPopup.classList.remove('show-popup');
-                currentPopup = null;
+            if (currentPopupWord) {
+                currentPopupWord.classList.remove('show-popup');
+                currentPopupWord = null;
+                // Удаляем обработчики скролла и ресайза, если они есть
+                if (scrollResizeHandler) {
+                    window.removeEventListener('scroll', scrollResizeHandler);
+                    window.removeEventListener('resize', scrollResizeHandler);
+                    scrollResizeHandler = null;
+                }
             }
         }
 
         // Обработчик клика по слову
         cheatWords.forEach(word => {
             word.addEventListener('click', function(event) {
-                event.stopPropagation();   // чтобы клик не закрыл рамку сразу
+                event.stopPropagation();
 
-                // Если кликнули на уже открытое слово — закрываем его и выходим
-                if (currentPopup === this) {
+                // Если кликнули на уже открытое слово — закрываем
+                if (currentPopupWord === this) {
                     closeAllPopups();
                     return;
                 }
 
-                // Закрываем текущую рамку, если она есть
+                // Закрыть предыдущую рамку
                 closeAllPopups();
 
-                // Создаём элемент рамки, если его ещё нет
+                // Создать рамку, если её нет
                 let popup = this.querySelector('.cheat-popup');
                 if (!popup) {
                     popup = document.createElement('div');
@@ -779,37 +866,31 @@ man chronyd</pre>
 
                 // Показываем рамку
                 this.classList.add('show-popup');
-                currentPopup = this;
+                currentPopupWord = this;
 
-                // Позиционируем рамку под словом
-                const rect = this.getBoundingClientRect();
-                popup.style.top = (rect.bottom + 8) + 'px';
-                popup.style.left = rect.left + 'px';
+                // Установить начальную позицию
+                updateCurrentPopupPosition();
 
-                // Корректировка, если рамка вылезает за правый край
-                setTimeout(() => {
-                    const popupRect = popup.getBoundingClientRect();
-                    if (popupRect.right > window.innerWidth) {
-                        popup.style.left = (window.innerWidth - popupRect.width - 15) + 'px';
+                // Навесить обработчики на скролл и ресайз для обновления позиции
+                scrollResizeHandler = function() {
+                    if (currentPopupWord) {
+                        updateCurrentPopupPosition();
                     }
-                }, 5);
+                };
+                window.addEventListener('scroll', scrollResizeHandler);
+                window.addEventListener('resize', scrollResizeHandler);
 
-                // Устанавливаем таймер на автоматическое закрытие через 4 секунды
+                // Таймер автоматического закрытия через 15 секунд
                 closeTimeout = setTimeout(() => {
-                    if (currentPopup) {
-                        currentPopup.classList.remove('show-popup');
-                        currentPopup = null;
-                    }
-                    closeTimeout = null;
-                }, 4000);
+                    closeAllPopups();
+                }, 15000);
             });
         });
 
-        // Клик в любом месте страницы (кроме слов) закрывает текущую рамку
+        // Клик в любом месте страницы (кроме слов) закрывает рамку
         document.body.addEventListener('click', function(event) {
             let target = event.target;
             let isCheatWord = false;
-            // Проверяем, был ли клик по элементу с классом cheat-word или внутри него
             while (target) {
                 if (target.classList && target.classList.contains('cheat-word')) {
                     isCheatWord = true;
@@ -824,5 +905,148 @@ man chronyd</pre>
     })();
 </script>
 
+</body>
+</html>
+
+Скачайте Outlook для iOS
+
+Каргин Артём Михайлович
+Вт 02.06.2026 15:21
+Каргин Артём Михайлович
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Настройка статического IP-адреса Альт Сервер 10 — Копия содержания</title>
+<style>
+  /* Базовые стили для содержания — легко переопределяются вашими стилями */
+  .content-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.6;
+    color: #222;
+  }
+  .content-container h1,
+  .content-container h2 {
+    margin-top: 1.5em;
+    margin-bottom: 0.75em;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  .content-container h1 {
+    font-size: 2em;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.3em;
+  }
+  .content-container h2 {
+    font-size: 1.5em;
+  }
+  .content-container p {
+    margin-bottom: 1.2em;
+  }
+  .content-container pre,
+  .content-container code {
+    background-color: #f5f7f9;
+    border-radius: 6px;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+    font-size: 0.9em;
+  }
+  .content-container code {
+    padding: 0.2em 0.4em;
+    white-space: nowrap;
+  }
+  .content-container pre {
+    padding: 1em;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    border: 1px solid #eaeef2;
+    margin-bottom: 1.5em;
+  }
+  .content-container pre code {
+    background: none;
+    padding: 0;
+    white-space: pre-wrap;
+  }
+  .content-container hr {
+    margin: 2em 0;
+    border: 0;
+    border-top: 1px solid #e0e0e0;
+  }
+  .content-container .footnote {
+    font-size: 0.85em;
+    color: #5a6874;
+    border-top: 1px solid #eaeef2;
+    padding-top: 1.2em;
+    margin-top: 1.8em;
+  }
+  @media (max-width: 640px) {
+    .content-container {
+      padding: 15px;
+    }
+    .content-container pre {
+      font-size: 0.85em;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="content-container">
+  <!-- Оригинальная статья: https://itproblog.ru/настройка-статического-ip-адреса-альт-с/ -->
+  <p><em>Источник: <a href="https://itproblog.ru/%D0%BD%D0%B0%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B0-%D1%81%D1%82%D0%B0%D1%82%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%BE%D0%B3%D0%BE-ip-%D0%B0%D0%B4%D1%80%D0%B5%D1%81%D0%B0-%D0%B0%D0%BB%D1%8C%D1%82-%D1%81/" target="_blank" rel="noopener noreferrer">itproblog.ru</a> · Роман, 16.07.2022</em></p>
+
+  <h1>Настройка статического IP-адреса Альт Сервер 10</h1>
+  
+  <p><strong>Эта микростатья (или даже шпаргалка)</strong> кратко показывает, как выполняется настройка статического IP-адреса Альт Сервер 10. По настройке сети на сайте вендора есть краткое руководство для начинающих. Но я сделаю совсем краткую выдержку — только непосредственные команды по настройке.</p>
+  
+  <p>Если вы используете сервер с графическим интерфейсом и NetworkManager, то можете использовать <a href="#">вот это руководство</a>. В моём случае сервер без графического интерфейса в режиме минимальной конфигурации.</p>
+  
+  <hr />
+  
+  <h2>Настройка статического IP-адреса Альт Сервер 10</h2>
+  
+  <p>Выполните аутентификацию в операционной системе и перейдите в режим привилегированного пользователя:</p>
+  <pre><code>su -</code></pre>
+  
+  <p>Выясним название нашего сетевого интерфейса:</p>
+  <pre><code>ip addr show</code></pre>
+  <p>Имя моего сетевого адаптера — <code>ens33</code> (оно пригодится далее). У вас адаптер может называться, например, <code>eth0</code>.</p>
+  
+  <p>Отключаем сетевой адаптер:</p>
+  <pre><code>ip link set ens33 down</code></pre>
+  
+  <p>Задаём параметры статической адресации:</p>
+  <pre><code>echo 10.10.10.199/24 > /etc/net/ifaces/ens33/ipv4address
+echo default via 10.10.10.254 > /etc/net/ifaces/ens33/ipv4route</code></pre>
+  
+  <p>Редактируем файл options — меняем строчку «BOOTPROTO=dhcp» на «BOOTPROTO=static»:</p>
+  <pre><code>vim /etc/net/ifaces/ens33/options</code></pre>
+  <p>Содержимое должно выглядеть примерно так:</p>
+  <pre><code>BOOTPROTO=static
+TYPE=eth
+CONFIG_WIRELESS=no
+SYSTEMD_BOOTPROTO=dhcp4
+CONFIG_IPV4=yes
+DISABLED=no
+NM_CONTROLLED=no
+SYSTEMD_CONTROLLED=no</code></pre>
+  
+  <p>Перезапускаем сетевую службу (или полностью перезагружаем сервер):</p>
+  <pre><code>service network restart</code></pre>
+  
+  <hr />
+  
+  <h2>Настройка DNS-клиента</h2>
+  
+  <p>Статический IP-адрес мы настроили выше. Последний штрих — нужно указать адрес DNS-сервера. Добавим адрес нужного нам DNS-сервера в конфигурационный файл resolv.conf:</p>
+  <pre><code>echo nameserver 8.8.8.8 > /etc/resolv.conf</code></pre>
+  
+  <div class="footnote">
+    ⚠️ <strong>Примечание:</strong> команды и пути адаптированы под сетевую подсистему etcnet (папка <code>/etc/net/ifaces/&lt;интерфейс&gt;</code>). Для новых версий Альт Сервер также может использоваться NetworkManager — в таком случае настройки выполняются через <code>nmcli</code>.
+  </div>
+</div>
 </body>
 </html>
