@@ -362,28 +362,21 @@ SYSTEMD_CONTROLLED=no</code></pre>
         <p>
             <strong>
                 <span class="cheat-word" data-hint="ISP
-hostnamectl set-hostname ISP
-exec bash
-apt-get update
-apt-get install tzdata nftables -y
-timedatectl set-timezone Europe/Moscow
+hostnamectl set-hostname ISP;exec bash
 
+vim /etc/net/ifaces/ens18/options
+BOOTPROTO=dhcp
+TYPE=eth
+vim /etc/net/ifaces/ens18/resolv.conf
+search au-team.irpo
+nameserver 77.88.8.8
+vim etc/net/sysctl.conf – поменять 0 на 1
 mkdir /etc/net/ifaces/ens19
 mkdir /etc/net/ifaces/ens20
-TYPE=eth > /etc/net/ifaces/ens19/options 
-TYPE=eth > /etc/net/ifaces/ens20/options
-172.16.1.1/28 > /etc/net/ifaces/ens19/ipv4address 
-172.16.2.1/28 > /etc/net/ifaces/ens20/ipv4address
-systemctl restart network
-
-
-iptables –t nat –A POSTROUTING –o ens18 –j
-MASQUERADE
-iptables-save >> /etc/sysconfig/iptables
-systemctl enable --now iptables
-
-vim /etc/net/sysctl.conf
-net.ipv4.ip_forward = 1
+vim/etc/net/ifaces/ens19/options 
+vim /etc/net/ifaces/ens20/options
+vim /etc/net/ifaces/ens19/ipv4address 
+vim /etc/net/ifaces/ens20/ipv4address
 systemctl restart network
 
 ">
@@ -395,9 +388,65 @@ systemctl restart network
         <p><strong>Окружение:</strong></p>
         <ul>
 <li><strong>Версия ОС:</strong> 
-<span class="cheat-word" data-hint="HQ-RTR
+<span class="cheat-word" data-hint="apt-get update
+apt-get install tzdata -y
+timedatectl set-timezone Europe/Moscow
+
+apt-get install iptables -y
+iptables -t nat -A POSTROUTING -o ens18 -j MASQUERADE
+iptables-save >> /etc/sysconfig /iptables
+systemctl enable --now iptables
+systemctl restart network
+iptables -t nat -L -n -v
+reboot
+
+"> 7.3</span>
+</li>
+<li><strong>Конфигурация ОС:</strong>
+ <span class="cheat-word" data-hint="HQ-RTR
+en
+conf t
 hostname hq-rtr.au-team.irpo
 ip domain-name au-team.irpo
+int ISP
+ip address 172.16.1.2/28
+ip nat outside
+ex
+port te0
+servise-instance ISP
+encapsulation untagged
+connect ip interface ISP
+int 100
+ip nat inside
+ip address 192.168.2.1/27
+int 200
+ip address 192.168.2.33/27
+ip nat inside
+int 999
+ip address 192.168.2.65/29
+ip nat inside
+port te1 
+
+">Рабочая станция
+</span>
+</li>
+<li><strong>Редакция ОС:</strong> 
+<span class="cheat-word" data-hint="
+service-instance 100
+encapsulation dot1q 100
+rewrite pop 1
+connect ip int 100
+ex
+service-instance 200
+encapsulation dot1q 200
+rewrite pop 1
+connect ip int 200
+ex
+service-instance 999
+encapsulation dot1q 999
+rewrite pop 1
+connect ip int 999
+ip route 0.0.0.0/0 172.16.1.1
 
 ntp timezone utc+3
 
@@ -405,115 +454,42 @@ username net_admin
 password P@ssw0rd
 role admin
 
-int ISP
-ip address 172.16.1.2/28
-ex
-int vl100
-ip address 172.16.1.2/28
-ex
-int vl200
-ip address 172.16.1.2/28
-ex
-int vl999
-ip address 172.16.1.2/28
-ex
-"> 7.3</span>
-</li>
-<li><strong>Конфигурация ОС:</strong>
- <span class="cheat-word" data-hint="port te0
-service-instance te0/ISP
-encapsulation untagged
-connect ip int ISP
-
-port te1
-service-instance te1/vl100
-encapsulation dot1q 100
-rewrite pop 1
-connect ip int vl100
-ex
- 
-service-instance te1/vl200
-encapsulation dot1q 200
-rewrite pop 1
-connect ip int vl200
-ex
-
-service-instance te1/vl999
-encapsulation dot1q 999
-rewrite pop 1
-connect ip int vl999
-ex
-">Рабочая станция
-</span>
-</li>
-<li><strong>Редакция ОС:</strong> 
-<span class="cheat-word" data-hint="
 ip pool dhcp 1
-range 192.168.1.34-192.168.1.62
+range 192.168.2.34-192.168.2.62
 
-dhcp-server 1
-pool dhcp 64
-mask 255.255.255.224    
-gateway 192.168.1.33
-dns 192.168.1.2
-domain-name au-team.irpo
-
-interface e3
-dhcp-server 1
-
-ip nat pool nat 192.168.1.1-192.168.1.30,192.168.1.33-192.168.1.62,192.168.1.65-192.168.1.70
-ip nat source dynamic inside-to-outside pool nat overload interface e1
-
-ip route 0.0.0.0/0 172.16.1.1 description default
-
-interface tunnel.1
-ip add 192.168.10.1/30
-ip tunnel 172.16.1.2 172.16.2.2 mode gre
 "> Стандартная</span>
 </li>
 <li><strong>Версия ПО:</strong> 
-<span class="cheat-word" data-hint="router ospf 1
+<span class="cheat-word" data-hint="dhcp-server 1
+pool dhcp 64
+mask 255.255.255.224	
+gateway 192.168.2.33
+dns 192.168.2.2
+domain-name au-team.irpo
+ip domain-lookup
+interface 200
+dhcp-server 1
+
+
+ip nat pool nat 192.168.2.1-192.168.2.30,192.168.2.33-192.168.2.62,192.168.2.65-192.168.2.70
+ip nat source dynamic inside-to-outside pool nat overload interface ISP
+
+interface tunnel.1
+ip add 10.10.10.1/30
+ip tunnel 172.16.1.2 172.16.2.2 mode gre
+ip ospf authentication-key P@$$word
+
+router ospf 1
 passive-interface default
 no passive-interface tunnel.1
-network 192.168.10.0/30 area 0.0.0.0
-network 192.168.1.0/27 area 0.0.0.0
-network 192.168.1.32/27 area 0.0.0.0
-network 192.168.100.64/29 area 0.0.0.0
+network 10.10.10.0/30 area 0
+network 192.168.2.0/27 area 0
+network 192.168.2.32/27 area 0
+network 192.168.2.64/29 area 0
 area 0 authentication
-ex
-int tunnel.1
-ip ospf authentication-key P@ssw0rd
-ex
 write memory
-int ISP
-ip nat outside
-ex
-int vl100
-ip nat inside
-ex
-int vl200
-ip nat inside
-ex
-int vl999
-ip nat inside
-ex
-ip nat pool HQ 192.168.100.1-192.168.100.254
-ip nat source dynamic inside-to-outside pool HQ overload int ISP
-write memory 
-ip pool dhcp 1
-range 192.168.1.34-192.168.1.62
+show ip int brief
 
-ip pool HQ-Clients 192.168.100.65-192.168.100.77
-dhcp-server 1
-pool HQ-Clients 1
-mask 255.255.255.240
-gateway 192.168.1.33
-dns 192.168.1.2
-domain-name au-team.irpo
-ex
-int vl200
-dhcp-server 1
-ex
 ">
                     chrony-4.0-5
                 </span>
@@ -524,151 +500,173 @@ ex
         <ul>
             <li><span class="cheat-word" data-hint="
 BR-RTR
+en
+conf t
 hostname br-rtr.au-team.irpo
 ip domain-name au-team.irpo
- 
-ntp timezone utc+3
+
+int ISP
+ip address 172.16.2.2/28
+ip nat outside
+ex
+port te0
+service-instance ISP
+encapsulation untagged
+connect ip interface ISP
+int 100
+ip address 192.168.3.1/28
+ip nat inside
+ex
+port te1
+service-instance 100
+encapsulation untagged
+rewrite pop 1
+connect ip int 100
+ip route 0.0.0.0/0 172.16.2.1
+ip domain-lookup
+show ip int brief 
+
+
+">эффективная работа</span> в среде, <li><span class="cheat-word" data-hint="
+    ntp timezone utc+3
 
 username net_admin
 password P@ssw0rd
 role admin
 
-int ISP
-ip address 172.16.2.2/28
-ex
-int BR-SRV
-ip address 192.168.2.1/28
-
-port te0
-service-instance te0/ISP
-encapsulation untagged
-connect ip int ISP
-ex
-
-port te1
-service-instance te1/BR-SRV
-encapsulation untagged
-connect ip int BR-SRV
+ip nat pool nat 192.168.3.1-192.168.3.14
+ip nat source dynamic inside-to-outside pool nat overload interface ISP
 
 interface tunnel.1
-ip add 192.168.10.2/30
+ip add 10.10.10.2/30
 ip tunnel 172.16.2.2 172.16.1.2 mode gre
-
-">эффективная работа</span> в среде, <li><span class="cheat-word" data-hint="router ospf 1
-passive-interface default
-no passive-interface tunnel.1
-network 192.168.10.0/30 area 0.0.0.0
-network 192.168.2.0/28 area 0.0.0.0
-area 0 authentication
-ex
-int tunnel.1
-ip ospf authentication-key P@ssw0rd
-ex
-write memory
-
-int ISP
-ip nat outside
-ex
-int BR-SRV
-ip nat inside
-ex
-
-ip nat pool nat 192.168.2.1-192.168.2.14
-ip nat source dynamic inside-to-outside pool nat overload interface e1
-
-ip route 0.0.0.0/0 172.16.2.1 description default
-
-ip ospf authentication
 ip ospf authentication-key P@$$word
 
+router ospf 1
+passive-interface default
+no passive-interface tunnel.1
+network 10.10.10.0/30 area 0.0.0.0
+network 192.168.3.0/28 area 0.0.0.0
+area 0 authentication
 
-                  ">где доступ</span>к временной связке прерывистый;</li>
+write memory
+">где доступ</span>к временной связке прерывистый;</li>
             <li><span class="cheat-word" data-hint="
-                  HQ-CLI
+HQ-CLI
 hostnamectl set-hostname hq-cli.au-team.irpo;exec bash
 
-timedatectl set-timezone Europe/Moscow
-
-vim /etc/net/ifaces/ens18/options
-NM_CONTROLLED=no
-DISABLED=no
 systemctl restart network
 
-                  ">адаптация</span> к внезапным изменениям частоты тактовых импульсов;</li>
-            <li><span class="cheat-word" data-hint="
-                  BR-SRV
-hostnamectl set-hostname br-srv.au-team.irpo;exec bash
-
 timedatectl set-timezone Europe/Moscow
 
-useradd sshuser -u 2026 
-passwd sshuser
-gpasswd -a sshuser wheel
-echo 'sshuser ALL = (root) NOPASSWD: ALL' >> /etc/sudoers
 
-vim /etc/openssh/sshd_config
-Port 2026
-MaxAuthTries 2
-Banner /etc/openssh/banner
-AllowUsers sshuser
-echo Authorized access only > /etc/openssh/banner
-systemctl restart sshd
+ BR-SRV
+hostnamectl set-hostname br-srv.au-team.irpo;exec bash
 
 vim /etc/net/ifaces/ens18/options
 BOOTPROTO=static
-echo 192.168.2.2/28 > /etc/net/ifaces/ens18/ipv4address
-echo default via 192.168.2.1 > /etc/net/ifaces/ens18/ipv4route
+TYPE=eth
+CONFIG_WIRELESS=no
+SYSTEMD_BOOTPROTO=static
+CONFIG_IPV4=yes
+DISABLED=no
+NM_CONTROLLED=no
+SYSTEMD_CONTROLLED=no
+
+vim /etc/net/ifaces/ens18/resolv.conf
+search au-team.irpo
+nameserver 192.168.2.2
+
+echo 192.168.3.2/28 &gt; /etc/net/ifaces/ens18/ipv4address
+echo default via 192.168.3.1 &gt; /etc/net/ifaces/ens18/ipv4route
 systemctl restart network
 
-                  ">работа</span> в перегруженной сети, даже если перегрузка продолжается длительное время;</li>
-            <li><span class="cheat-word" data-hint="HQ-SRV
-hostnamectl set-hostname hq-srv.au-team.irpo;exec bash
-
-
 timedatectl set-timezone Europe/Moscow
+
 useradd -s /bin/bash -u 2026 sshuser
 echo &quot;sshuser:P@ssw0rd&quot; | chpasswd
 gpasswd -a sshuser wheel
-echo 'sshuser ALL = (root) NOPASSWD: ALL' &gt;&gt; /etc/sudoers
-                  
+echo &#039;sshuser ALL = (root) NOPASSWD: ALL&#039; &gt;&gt; /etc/sudoers
+
 vim /etc/openssh/sshd_config
 Port 2026
 MaxAuthTries 2
 Banner /etc/openssh/banner
 AllowUsers sshuser
-echo Authorized access only > /etc/openssh/banner
+echo Authorized access only &gt; /etc/openssh/banner
 systemctl restart sshd
+vim /etc/apt/apt.conf
+Acquire::http::Proxy &quot;http://10.0.21.52:3128/&quot;
+Acquire::https::Proxy &quot;http://10.0.21.52:3128/&quot;
+">адаптация</span> к внезапным изменениям частоты тактовых импульсов;</li>
+            <li><span class="cheat-word" data-hint="
+HQ-SRV
+hostnamectl set-hostname hq-srv.au-team.irpo;exec bash
 
 vim /etc/net/ifaces/ens18/options
 BOOTPROTO=static
-echo 192.168.1.2/27 > /etc/net/ifaces/ens18/ipv4address
-echo default via 192.168.1.1 > /etc/net/ifaces/ens18/ipv4route
+TYPE=eth
+CONFIG_WIRELESS=no
+SYSTEMD_BOOTPROTO=static
+CONFIG_IPV4=yes
+DISABLED=no
+NM_CONTROLLED=no
+SYSTEMD_CONTROLLED=no
+
+echo 192.168.2.2/27 &gt; /etc/net/ifaces/ens18/ipv4address
+echo default via 192.168.2.1 &gt; /etc/net/ifaces/ens18/ipv4route
+vim /etc/net/ifaces/ens18/resolv.conf
+search au-team.irpo
+nameserver 77.88.8.8
 systemctl restart network
 
-                  ">время</span> в конфигурации по умолчанию никогда не изменяется, чтобы не нарушать работу других запущенных программ;</li>
+timedatectl set-timezone Europe/Moscow
+
+useradd -s /bin/bash -u 2026 sshuser
+echo &quot;sshuser:P@ssw0rd&quot; | chpasswd
+gpasswd -a sshuser wheel
+echo &#039;sshuser ALL = (root) NOPASSWD: ALL&#039; &gt;&gt; /etc/sudoers
+
+vim /etc/openssh/sshd_config
+Port 2026
+MaxAuthTries 2
+Banner /etc/openssh/banner
+AllowUsers sshuser
+echo Authorized access only &gt; /etc/openssh/banner
+systemctl restart sshd
+">работа</span> в перегруженной сети, даже если перегрузка продолжается длительное время;</li>
             <li><span class="cheat-word" data-hint="apt-get update &amp;&amp; apt-get install dnsmasq -y
-echo 'OPTIONS=&quot;&quot;' &gt; /etc/sysconfig/dnsmasq
+echo &#039;OPTIONS=&quot;&quot;&#039; &gt; /etc/sysconfig/dnsmasq
 systemctl restart network
-cat &lt;&lt;'EOT' &gt; /etc/dnsmasq.conf
+cat &lt;&lt;&#039;EOT&#039; &gt; /etc/dnsmasq.conf
 no-resolv
 no-poll
 no-hosts
+
 server=77.88.8.7
 server=195.208.4.1
 server=8.8.8.8
-                  
+
 cache-size=1000
 all-servers
 no-negcache
-                  
-host-record=hq-rtr.au-team.irpo,192.168.1.1
-host-record=hq-srv.au-team.irpo,192.168.1.2
-host-record=hq-cli.au-team.irpo,192.168.1.34
-address=/br-rtr.au-team.irpo/192.168.2.1
-address=/br-srv.au-team.irpo/192.168.2.2
+
+host-record=hq-rtr.au-team.irpo,192.168.2.1
+host-record=hq-srv.au-team.irpo,192.168.2.2
+host-record=hq-cli.au-team.irpo,192.168.2.34
+host-record=br-rtr.au-team.irpo,192.168.3.1
+host-record=br-srv.au-team.irpo,192.168.3.2
+
 address=/docker.au-team.irpo/172.16.1.1
 address=/web.au-team.irpo/172.16.2.1
-EOT\nsystemctl enable --now dnsmasq">использование</span> меньшего объема памяти и запуск процессов только при необходимости в целях экономии энергии.</li>
+EOT
+systemctl enable --now dnsmasq
+
+vim /etc/apt/apt.conf
+Acquire::http::Proxy &quot;http://10.0.21.52:3128/&quot;
+Acquire::https::Proxy &quot;http://10.0.21.52:3128/&quot;
+                  ">время</span> в конфигурации по умолчанию никогда не изменяется, чтобы не нарушать работу других запущенных программ;</li>
+            <li>использование меньшего объема памяти и запуск процессов только при необходимости в целях экономии энергии.</li>
         </ul>
 
         <div class="note">
